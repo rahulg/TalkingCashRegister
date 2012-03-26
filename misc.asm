@@ -198,7 +198,7 @@ Set_timer2      proc Far
 	mov dx, T2_CNT;
 	OUT DX, AL
 
-	MOV AX, 250;
+	MOV AX, 180;
 	MOV DX, T2_CA;
 	OUT DX, AL
 
