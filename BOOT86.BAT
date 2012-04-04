@@ -1,6 +1,0 @@
-ASM86 %1.ASM
-LINK86 %1.OBJ 
-LOC86 %1.LNK TO %1.ABS ST(START) AD(SEGMENTS(DATA_SEG(0H),CODE_SEG(100H),Message_Seg(ff000H)))
-OH86 %1.ABS TO %1.HEX
-del boot86.txt
-rename boot86.hex boot86.txt
