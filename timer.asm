@@ -26,19 +26,19 @@ INT_VEC_SEG	SEGMENT		AT 	0H
 	OVERFLOW	DD	?	;not defined yet
 	ARRAY_BND	DD	?	;Array Bounds
                 ORG     020H
-        TIMER0_VEC      DD      ? ;route for timer 0
+    TIMER0_VEC      DD      ? ;route for timer 0
 ; Interrupt control unit
 		ORG	030H
 	INTP0		DD	SERIAL_INTR
 	INTP1		DD	?       ;external, not used yet  
 	INTP2		DD	?	;external, not used yet
 	INTP3		DD	?	;external, not used yet
-        NUMERICS        DD      ?       ;
-        RSVED           DD      ?       ;system reserved 
-        TIMER1_VEC      DD      ?       ;route for timer 1
-        TIMER2_VEC      DD      TIMER2_INTR       ;Timer2 Route
-           ;Reserved from 050H to 080H     
-	       ORG     080H
+    NUMERICS    DD      ?       ;
+    RSVED       DD      ?       ;system reserved 
+    TIMER1_VEC  DD      ?       ;route for timer 1
+    TIMER2_VEC  DD      TIMER2_INTR       ;Timer2 Route
+    ;Reserved from 050H to 080H     
+	            ORG     080H
 ;Interrupt Vector addrerss from 080h (type 32) to 3fCH (type 255)
 ;are avaiable for user software interrupt           
 ; Software interrupts
@@ -72,7 +72,7 @@ ASSUME CS:MISC_ROUTINE
 ; ---This procdeure initialize the system I/O area and on-chip devices-----
 IODEFINE	PROC	FAR
 		PUSH	AX
-        	PUSH	DX
+        PUSH	DX
 
 ; Initialize SCU for operation
 		MOV	AL,SMD_DATA
@@ -223,7 +223,7 @@ Set_timer2 endp
 SERIAL_INTR:
 		PUSH	AX			;save registers
 		PUSH	BX
-                PUSH    DX
+        PUSH    DX
 
        
 
@@ -238,11 +238,11 @@ SERIAL_INTR:
 
 		
 ;RESET_INT_CTL
-                MOV DX, EOI
-                MOV AX, 12
-                OUT DX, AL
+        MOV DX, EOI
+        MOV AX, 12
+        OUT DX, AL
 
-                POP     DX
+        POP     DX
 		POP	BX			;false serial interrupt
 		POP	AX
 		IRET				;return
@@ -255,8 +255,8 @@ RECEIVE_INTR:
 		CALL	FAR PTR SERIAL_REC_ACTION
 		
 		MOV DX, EOI
-                MOV AX, 12
-                OUT DX, AL
+        MOV AX, 12
+        OUT DX, AL
 		POP     DX
 		POP	BX			;false serial interrupt
 		POP	AX
@@ -288,13 +288,13 @@ L_TX2:
 L_TX3:
 		
 ;RESET_INT_CTL
-                MOV DX, EOI
-                MOV AX, 12
-                OUT DX, AL
-      		POP	ES			;restore original ES(transmit)
-		
-                POP     DX 
-                POP	BX			;return serial interrupt
+	    MOV DX, EOI
+	    MOV AX, 12
+	    OUT DX, AL
+  		POP	ES			;restore original ES(transmit)
+	
+        POP     DX 
+        POP	BX			;return serial interrupt
 		POP	AX
 		IRET
 ; **************** End of SERIAL_INTR service routine ************************
@@ -309,10 +309,10 @@ TIMER2_INTR:
 		CALL	FAR PTR TIMER2_ACTION
               
 		POP	AX		;return interrupt
-                ;RESET_INT_CTL
-                MOV DX, EOI
-                MOV AX, 8
-                OUT DX, AL
+        ;RESET_INT_CTL
+        MOV DX, EOI
+        MOV AX, 8
+        OUT DX, AL
 		IRET
 ; **************** End of TIMER2_INTR service routine ************************
 
@@ -324,6 +324,7 @@ STACK_SEG	SEGMENT
 	TOS	LABEL	WORD
 STACK_SEG	ENDS
 
+; --------------- Cash Register Begins --------------------
 
 DATA_SEG SEGMENT
 
@@ -339,15 +340,15 @@ DATA_SEG SEGMENT
 	LED_COUNTER			DB	10h
 	KEYPAD_COUNTER		DW	3E8h
 	
-	NAME_EGGS			DB	'Eggs', 13, 10
-	NAME_MILK			DB	'Milk', 13, 10
 	NAME_APPLES			DB	'Apples', 13, 10
-	NAME_COKE			DB	'Coke', 13, 10
-	NAME_ORANGES		DB	'Oranges', 13, 10
 	NAME_BATTERIES		DB	'Batteries', 13, 10
 	NAME_CANDIES		DB	'Candies', 13, 10
-	NAME_MELONS			DB	'Melons', 13, 10
 	NAME_CARROTS		DB	'Carrots', 13, 10
+	NAME_COKE			DB	'Coke', 13, 10
+	NAME_EGGS			DB	'Eggs', 13, 10
+	NAME_MILK			DB	'Milk', 13, 10
+	NAME_MELONS			DB	'Melons', 13, 10
+	NAME_ORANGES		DB	'Oranges', 13, 10
 	NAME_PENS			DB	'Pens', 13, 10
 
 	PRODUCT_NAMES		DB	10 DUP(?)
@@ -362,9 +363,9 @@ DATA_SEG SEGMENT
 
 	SOUND_ADDR			DD	0
 	SOUND_REM			DW	0
-	SOUND_BASE_ADDR		DD	51 DUP(0) ;LUT to be filled in when base addr available
-	SOUND_SIZE			DW	51 DUP(0FFFFh) ;LUT to be filled in
-
+	SOUND_BASE_ADDR		DD	? 
+	SOUND_SIZE			DW	?
+	
 	SOUND_TWENTY		EQU	20
 	SOUND_THIRTY		EQU	21
 	SOUND_FORTY			EQU	22
@@ -392,7 +393,7 @@ DATA_SEG SEGMENT
 
 	SOUND_PROD_BASE		EQU 41
 
-	SOUND_QUEUE			DB	32 DUP(?)
+	SOUND_QUEUE			DB	64 DUP(?)
 	SOUND_QUEUE_HEAD	DB	0
 	SOUND_QUEUE_TAIL	DB	0
 
@@ -568,8 +569,6 @@ SERIAL_REC_ACTION	PROC	FAR
 		POP	CX
 		RET
 SERIAL_REC_ACTION	ENDP
-
-
 
 TIMER2_ACTION	PROC	FAR
 	PUSHA
@@ -754,6 +753,7 @@ KEYPAD1_READER PROC FAR
 	PUSH BX
 	PUSH CX
 	PUSH DX
+	PUSH DS
 	
 	MOV AX, DATA_SEG
 	MOV DS, AX
@@ -828,6 +828,7 @@ KR1_STORE:
 	MOV DS:KEYR_PRI_READ, 1
 	
 KR1_DONE:
+	POP DS
 	POP DX
 	POP CX
 	POP BX
