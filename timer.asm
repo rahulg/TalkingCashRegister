@@ -3,13 +3,13 @@ NAME TIMER
 ; Main program for uPD70208 microcomputer system
 ;
 ; Author: 	Dr Tay Teng Tiow
-; Address:     	Department of Electrical Engineering 
+; Address:     	Department of Electrical Engineering
 ;         	National University of Singapore
 ;		10, Kent Ridge Crescent
-;		Singapore 0511.	
+;		Singapore 0511.
 ; Date:   	6th September 1991
 ;
-; This file contains proprietory information and cannot be copied 
+; This file contains proprietory information and cannot be copied
 ; or distributed without prior permission from the author.
 ; =========================================================================
 
@@ -30,17 +30,17 @@ INT_VEC_SEG	SEGMENT		AT 	0H
 ; Interrupt control unit
 		ORG	030H
 	INTP0		DD	SERIAL_INTR
-	INTP1		DD	?       ;external, not used yet  
+	INTP1		DD	?       ;external, not used yet
 	INTP2		DD	?	;external, not used yet
 	INTP3		DD	?	;external, not used yet
     NUMERICS    DD      ?       ;
-    RSVED       DD      ?       ;system reserved 
+    RSVED       DD      ?       ;system reserved
     TIMER1_VEC  DD      ?       ;route for timer 1
     TIMER2_VEC  DD      TIMER2_INTR       ;Timer2 Route
-    ;Reserved from 050H to 080H     
+    ;Reserved from 050H to 080H
 	            ORG     080H
 ;Interrupt Vector addrerss from 080h (type 32) to 3fCH (type 255)
-;are avaiable for user software interrupt           
+;are avaiable for user software interrupt
 ; Software interrupts
 	SOFT0		DD	? ;TYPE 32
 	SOFT1		DD	? ;TYPE 33
@@ -82,12 +82,12 @@ IODEFINE	PROC	FAR
 		OUT	SIER,AL
 ; =============== INITIALIZATION OF INTERRUPT CONTROL UNIT =============
 ; Initialize ICU for operation
-		
+
 ; Mask all interrupts except SCU
                 ;disable TX interrupt,ENABLE RX.
 		MOV	AL,1
 		OUT	SIER,AL
-; SCU use INT0, enable INT0		
+; SCU use INT0, enable INT0
 	        MOV     DX, INT0_CTRL
   		XOR	AX,AX
          	OUT	DX,AL
@@ -95,7 +95,7 @@ IODEFINE	PROC	FAR
                 CLI
                 MOV	DX,IMKW
 		MOV	AX,0EEH
-		OUT 	DX,AL   
+		OUT 	DX,AL
 		POP	DX
 		POP	AX
 		RET
@@ -123,12 +123,12 @@ PRINT_2HEX	ENDP
 ; ---------------- Start of procedure PRINT_CHAR ------------------------
 PRINT_CHAR	PROC	FAR
 ; This procedure is called to put a character into queue for transmission
-; through the serial port. 
+; through the serial port.
 ; The data to be transmitted is put in AL before the procedure is called.
 ; Data is put at the tail. Queue_tail is then inc to point to next loc.
 ; Data is taken from the head. Queue_head is then inc to point to next data.
-	
-		PUSH	BX			;Save BX	
+
+		PUSH	BX			;Save BX
 		PUSH	ES
 
 		PUSH	AX
@@ -141,13 +141,13 @@ PRINT_CHAR	PROC	FAR
 		OUT	SIER,AL
 
 		POP	AX
-		MOV	BX,ES:QUEUE_TAIL		
+		MOV	BX,ES:QUEUE_TAIL
 		MOV	ES:QUE_BASE[BX],AL	;Put data to queue_tail.
 		INC	ES:QUEUE_TAIL		;Increment queue_tail
 		CMP	ES:QUEUE_TAIL,QUEUE_LEN	;and wrap around
 		JL	L_PRINT1		;to zero if needed.
 		MOV	ES:QUEUE_TAIL,0
-L_PRINT1:	
+L_PRINT1:
 		IN	AL,SIER			;enable TX interrupt
 		OR	AL,00000010B
 		OUT	SIER,AL
@@ -187,7 +187,7 @@ CHAR2HEX	ENDP
 Set_timer2      proc Far
 	push ax
 	push dx
-	;Initialize Timer2	
+	;Initialize Timer2
 	mov ax, 0;
 	mov dx, T2_CNT;
 	OUT DX, AL
@@ -216,8 +216,8 @@ Set_timer2 endp
 
 ;*****************CAUTION*****************
 ;At the end of interrutp routines, you must write EOI (end of Int) +
-;with the INT type (INT0-type 12) (timer-type 8) 		   +	
-;comment added by Zhu Shunyu	March,2000			   +				
+;with the INT type (INT0-type 12) (timer-type 8) 		   +
+;comment added by Zhu Shunyu	March,2000			   +
 ;Interrupt Routines Modified accordly to fit 80C188XL
 ;+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 SERIAL_INTR:
@@ -225,9 +225,9 @@ SERIAL_INTR:
 		PUSH	BX
         PUSH    DX
 
-       
 
-               	               
+
+
 		IN	AL,IIR			;read in serial INT ID
                 AND     AL,00000111B
 		CMP     AL,00000100B		;check if rx interrupt
@@ -236,7 +236,7 @@ SERIAL_INTR:
 		CMP    	AL,00000010B		;check if tx interrupt
 		JE	TRANSMIT_INTR
 
-		
+
 ;RESET_INT_CTL
         MOV DX, EOI
         MOV AX, 12
@@ -247,13 +247,13 @@ SERIAL_INTR:
 		POP	AX
 		IRET				;return
 
-RECEIVE_INTR:	
-              
-		IN	AL,SRB			
+RECEIVE_INTR:
+
+		IN	AL,SRB
 ; Information received will be used by user routine
 ; Action to be taken will be contained in SERIAL_REC_ACTION
 		CALL	FAR PTR SERIAL_REC_ACTION
-		
+
 		MOV DX, EOI
         MOV AX, 12
         OUT DX, AL
@@ -263,7 +263,7 @@ RECEIVE_INTR:
 		IRET
 
 TRANSMIT_INTR:
-               
+
 		PUSH	ES			;save ES
 		MOV	BX,SEG QUEUE_TAIL	;set ES to SERIAL_Q_SEG
 		MOV	ES,BX
@@ -277,7 +277,7 @@ TRANSMIT_INTR:
 		CMP	ES:QUEUE_HEAD,QUEUE_LEN ;wrap around if necessary
 		JL	L_TX1
 		MOV	ES:QUEUE_HEAD,0
-L_TX1:		
+L_TX1:
 		MOV	BX,ES:QUEUE_TAIL
 		CMP	BX,ES:QUEUE_HEAD	;more data to be transmitted?
 		JNE	L_TX3
@@ -286,14 +286,14 @@ L_TX2:
 		AND    	AL,11111101B
 		OUT	SIER,AL
 L_TX3:
-		
+
 ;RESET_INT_CTL
 	    MOV DX, EOI
 	    MOV AX, 12
 	    OUT DX, AL
   		POP	ES			;restore original ES(transmit)
-	
-        POP     DX 
+
+        POP     DX
         POP	BX			;return serial interrupt
 		POP	AX
 		IRET
@@ -304,10 +304,10 @@ L_TX3:
 ; **************** Start of TIMER0_INTR service routine ******************
 TIMER2_INTR:
 		PUSH 	AX
-		
+
 ; Action to be taken on timer0 interrupt to be written by user
 		CALL	FAR PTR TIMER2_ACTION
-              
+
 		POP	AX		;return interrupt
         ;RESET_INT_CTL
         MOV DX, EOI
@@ -336,10 +336,10 @@ DATA_SEG SEGMENT
 	HEXCHAR				DB	'0', '1', '2', '3', '4', '5', '6', '7'
 						DB	'8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
 
-	
+
 	LED_COUNTER			DB	10h
 	KEYPAD_COUNTER		DW	3E8h
-	
+
 	NAME_APPLES			DB	'Apples', 13, 10
 	NAME_BATTERIES		DB	'Batteries', 13, 10
 	NAME_CANDIES		DB	'Candies', 13, 10
@@ -426,7 +426,7 @@ DATA_SEG SEGMENT
 	PORTA_VAL			DB	0
 	LED_CURRENT			DB	0
 	LED_VALS			DB	6 DUP(?)
-	; .GFEDCBA	
+	; .GFEDCBA
 	LED_LUT				DB	00111111B, 00000110B, 01011011B, 01001111B, 01100110B
 						DB	01101101B, 01111101B, 00100111B, 01111111B, 01101111B
 						DB	11110111B, 11111111B, 10111001B, 10111111B, 11111001B
@@ -451,7 +451,7 @@ ASSUME	CS:CODE_SEG, SS:STACK_SEG
 
 START:
 ;initialize stack area
-	MOV	AX,STACK_SEG		
+	MOV	AX,STACK_SEG
 	MOV	SS,AX
 	MOV	SP,TOS
 
@@ -493,22 +493,22 @@ START:
 ; ^^^^^^^^^^^^^^^^^  Start of User Main Routine  ^^^^^^^^^^^^^^^^^^
 	call set_timer2
 	STI
-	
+
 	MOV AX, DATA_SEG
 	MOV DS, AX
-	
+
 	MOV DS:LED_VALS[0], 1h
 	MOV DS:LED_VALS[1], 2h
 	MOV DS:LED_VALS[2], 3h
 	MOV DS:LED_VALS[3], 4h
 	MOV DS:LED_VALS[4], 5h
 	MOV DS:LED_VALS[5], 6h
-	
+
 	MOV DS:PORTA_VAL, 00h
 
 	MOV DS:SOUND_QUEUE_HEAD, 0
 	MOV DS:SOUND_QUEUE_TAIL, 0
-	
+
 	MOV BX, 0
 	MOV DS:SOUND_QUEUE[BX], SOUND_APPLES
 	INC DS:SOUND_QUEUE_HEAD
@@ -531,37 +531,37 @@ NEXT:
 
 ;	CMP DS:KEYR_PRI_READ, 0
 ;	JE KEY_DONE
-	
+
 ;	XOR BH, BH
 ;	MOV BL, DS:KEYR_PRI_VAL
 ;	MOV AX, BX
 
 ;	MOV CL, 4
 ;	SHR BL, CL
-	
+
 ;	AND AL, 0Fh
-	
+
 ;	MOV DS:LED_VALS[BX], AL
-;	
+;
 ;	MOV DS:KEYR_PRI_READ, 0
-;	
+;
 ;	CMP DS:KEYR_SEC_READ, 0
 ;	JE KEY_DONE
-;	
+;
 ;	XOR BH, BH
 ;	MOV BL, DS:KEYR_SEC_VAL
 ;	MOV AX, BX
 ;
 ;	MOV CL, 4
 ;	SHR BL, CL
-;	
+;
 ;	AND AL, 0Fh
-;	
+;
 ;	MOV DS:LED_VALS[BX], AL
-;	
+;
 ;	MOV DS:KEYR_SEC_READ, 0
 
-	
+
 KEY_DONE:
 
 JMP NEXT
@@ -614,7 +614,7 @@ TIMER2_ACTION	PROC	FAR
 	PUSH DS
 
 	CLI
-	
+
 	; Restore DS
 	MOV	AX,DATA_SEG
 	MOV	DS,AX
@@ -624,7 +624,7 @@ TIMER2_ACTION	PROC	FAR
 	MOV AL, DS:SOUND_QUEUE_TAIL
 	CMP AH, AL
 	JE NO_SOUND
-	
+
 	; Speech synthesis
 	CALL NEAR PTR SPEECH_SYNTH
 
@@ -636,7 +636,7 @@ NO_SOUND:
 	MOV DS:SOUND_QUEUE_HEAD, 0
 
 HAS_SOUND:
-	
+
 	STI
 
 	; Counter to limit LED refresh rate
@@ -661,7 +661,7 @@ LED_DONE:
 	CALL NEAR PTR KEYPAD1_READER
 
 K1_DONE:
-	
+
 	CMP DS:KEYR_SEC_READ, 0
 	JNE K2_DONE
 
@@ -672,7 +672,7 @@ K2_DONE:
 	MOV DS:KEYPAD_COUNTER, 3E8h
 
 NO_KEYPAD:
-	
+
 	POP DS
 	POP AX
 	RET
@@ -684,7 +684,7 @@ SPEECH_SYNTH PROC NEAR
 	PUSH DS
 	PUSH SI
 	PUSH DI
-	
+
 	MOV AX, DATA_SEG
 	MOV DS, AX
 
@@ -696,54 +696,54 @@ SPEECH_SYNTH PROC NEAR
 	MOV BL, DS:SOUND_QUEUE_TAIL
 	MOV BL, DS:SOUND_QUEUE[BX]
 	MOV SI, OFFSET SOUND_BASE_ADDR
-	
+
 	SHL BX, 2
 	MOV AX, WORD PTR [BX][SI]
-	
+
 	MOV WORD PTR DS:SOUND_ADDR[0], AX
-	
+
 	MOV AX, WORD PTR 2[BX][SI]
 	MOV WORD PTR DS:SOUND_ADDR[2], AX
 
 	SHR BX, 1
 	MOV SI, OFFSET SOUND_SIZE
 	MOV AX, WORD PTR [BX][SI]
-	
+
 	; Set remaining sound samples
 	MOV DS:SOUND_REM, AX
 	; Increment tail
 	; INC DS:SOUND_QUEUE_TAIL
 
 PENDING_SOUND:
-	
+
 	MOV SI, WORD PTR DS:SOUND_ADDR[0]
 	MOV DI, WORD PTR DS:SOUND_ADDR[2]
-	
+
 	ADD DI, 4h
 	SHL DI, 12
-	
+
 	; Set DS to audio EEP segment
 	MOV DS, DI
-	
+
 	MOV AL, DS:[SI]
 	MOV DX, DAC_SELECT
 	OUT DX, AL
-	
+
 	; Restore DS
 	MOV AX, DATA_SEG
 	MOV DS, AX
-	
+
 	; Increment current addr
 	INC WORD PTR DS:SOUND_ADDR[0]
 	JNZ SOUND_DONE
-	
+
 	INC WORD PTR DS:SOUND_ADDR[2]
-	
+
 SOUND_DONE:
 	; decrement remaining samples
 	DEC DS:SOUND_REM
 	JNZ SOUND_REMAINS
-	
+
 	INC DS:SOUND_QUEUE_TAIL
 
 SOUND_REMAINS:
@@ -761,7 +761,7 @@ DISPLAY_HANDLER PROC NEAR
 	PUSH BX
 	PUSH DX
 	PUSH DS
-	
+
 	MOV AX, DATA_SEG
 	MOV DS, AX
 
@@ -770,7 +770,7 @@ DISPLAY_HANDLER PROC NEAR
 	NOT AL
 	MOV DX, PORTA
 	OUT DX, AL
-	
+
 	; Output bit pattern for desired digit
 	XOR BH, BH
 	MOV BL, DS:LED_CURRENT
@@ -778,23 +778,23 @@ DISPLAY_HANDLER PROC NEAR
 	MOV AL, DS:LED_LUT[BX]
 	MOV DX, DISPLAY_VAL
 	OUT DX, AL
-	
+
 	; Select display
 	MOV AL, 01h
 	MOV CL, DS:LED_CURRENT
 	SHL AL, CL
-	
+
 	MOV DX, DISPLAY_SELECT
 	NOT AL
 	OUT DX, AL
-	
+
 	; Switch segments
 	INC DS:LED_CURRENT
 	CMP DS:LED_CURRENT, 06h
 	JBE LED_CUR_SKIP
-	
+
 	MOV DS:LED_CURRENT, 00h
-	
+
 LED_CUR_SKIP:
 	POP DS
 	POP DX
@@ -809,79 +809,79 @@ KEYPAD1_READER PROC NEAR
 	PUSH CX
 	PUSH DX
 	PUSH DS
-	
+
 	MOV AX, DATA_SEG
 	MOV DS, AX
 
 KR1_ROW1:
-	
+
 	MOV DX, PORTB
 	MOV AL, 01h
 	OUT DX, AL
-	
+
 	; Backup col ID
 	MOV BL, AL
-	
+
 	MOV DX, PORTC
 	IN AL, DX
-	
+
 	; Clear fist 4 bits
 	AND AL, 0Fh
-	
+
 	CMP AL, 00h
 	JNE KR1_STORE
-	
+
 KR1_ROW2:
 
 	MOV DX, PORTB
 	MOV AL, 02h
 	OUT DX, AL
-	
+
 	; Backup col ID
 	MOV BL, AL
-	
+
 	MOV DX, PORTC
 	IN AL, DX
-	
+
 	; Clear fist 4 bits
 	AND AL, 0Fh
-	
+
 	CMP AL, 00h
 	JNE KR1_STORE
-	
+
 KR1_ROW3:
 
 	MOV DX, PORTB
 	MOV AL, 04h
 	OUT DX, AL
-	
+
 	; Backup col ID
 	MOV BL, AL
-	
+
 	MOV DX, PORTC
 	IN AL, DX
-	
+
 	; Clear fist 4 bits
 	AND AL, 0Fh
-	
+
 	CMP AL, 00h
 	JNE KR1_STORE
-	
+
 	JMP KR1_DONE
-	
+
 KR1_STORE:
 
 	; Shift col ID to fist nibble
 	MOV CL, 04h
 	SHL BL, CL
-	
+
 	; BL: [col][row]
 	OR BL, AL
-	
+
 	; Store in memory
 	MOV DS:KEYR_PRI_VAL, BL
 	MOV DS:KEYR_PRI_READ, 1
-	
+
 KR1_DONE:
 	POP DS
 	POP DX
@@ -896,75 +896,75 @@ KEYPAD2_READER PROC NEAR
 	PUSH BX
 	PUSH CX
 	PUSH DX
-	
+
 	MOV AX, DATA_SEG
 	MOV DS, AX
 
 KR2_ROW1:
-	
+
 	MOV DX, PORTB
 	MOV AL, 10h
 	OUT DX, AL
-	
+
 	; Backup col ID
 	MOV BL, AL
-	
+
 	MOV DX, PORTC
 	IN AL, DX
-	
+
 	; Clear fist 4 bits
 	AND AL, 0Fh
-	
+
 	CMP AL, 00h
 	JNE KR2_STORE
-	
+
 KR2_ROW2:
 
 	MOV DX, PORTB
 	MOV AL, 20h
 	OUT DX, AL
-	
+
 	; Backup col ID
 	MOV BL, AL
-	
+
 	MOV DX, PORTC
 	IN AL, DX
-	
+
 	; Clear fist 4 bits
 	AND AL, 0Fh
-	
+
 	CMP AL, 00h
 	JNE KR2_STORE
-	
+
 KR2_ROW3:
 
 	MOV DX, PORTB
 	MOV AL, 40h
 	OUT DX, AL
-	
+
 	; Backup col ID
 	MOV BL, AL
-	
+
 	MOV DX, PORTC
 	IN AL, DX
-	
+
 	; Clear fist 4 bits
 	AND AL, 0Fh
-	
+
 	CMP AL, 00h
 	JNE KR2_STORE
-	
+
 	JMP KR2_DONE
-	
+
 KR2_STORE:
 
 	; BL: [col][row]
 	OR BL, AL
-	
+
 	; Store in memory
 	MOV DS:KEYR_SEC_VAL, BL
 	MOV DS:KEYR_SEC_READ, 1
-	
+
 KR2_DONE:
 	POP DX
 	POP CX
@@ -972,6 +972,11 @@ KR2_DONE:
 	POP AX
 	RET
 KEYPAD2_READER ENDP
+
+KP_RAW2LEGIT PROC NEAR
+
+	RET
+KP_RAW2LEGIT ENDP
 
 CODE_SEG	ENDS
 END
