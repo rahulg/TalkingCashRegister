@@ -495,8 +495,8 @@ DATA_SEG SEGMENT
 	PRODUCT_NAME_LEN	DB	6, 9, 7, 7, 4, 4, 4, 6, 7, 4
 	; Setup: LEA each string to PRODUCT_NAMES[i]
 
-	ITEM_PRICE			DW	10 DUP(01010h) ;Default val hardcoded, update from serial
-	ITEM_INVENTORY		DB	10 DUP(020h) ;Update from serial
+	ITEM_PRICE			DW	10 DUP(1010) ;Default val hardcoded, update from serial
+	ITEM_INVENTORY		DB	10 DUP(32) ;Update from serial
 	SESSION_TALLY		DW	0
 
 	TXN_QTYS			DB	10 DUP(0)
@@ -928,6 +928,16 @@ M_TXN_PREP:
 
 	MOV DS:TXN_STATUS, 0h
 	AND DS:PORTA_VAL, 0CFh
+
+	; Reusing BX = item id, AL = qty
+	XOR AH, AH
+	MOV CX, DS:ITEM_PRICE[BX]
+	MUL CX
+
+	ADD AX, DS:TXN_TALLY
+
+	MOV DS:DISPLAY_PASS, AX
+	CALL FAR PTR UPDATE_CASH_DISPLAY
 
 	MOV DS:TXN_STATE, TXN_STATE_IDLE
 	JMP M_TXN_POLL2FAR
