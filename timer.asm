@@ -26,7 +26,7 @@ ORG 0000H
 	OVERFLOW	DD	? ;not defined yet
 	ARRAY_BND	DD	? ;Array Bounds
 ORG 020H
-    TIMER0_VEC	DD ? ;route for timer 0
+    TIMER0_VEC	DD	? ;route for timer 0
 ; Interrupt control unit
 ORG 030H
 	INTP0		DD	SERIAL_INTR
