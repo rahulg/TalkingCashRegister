@@ -230,7 +230,6 @@ IODEFINE PROC FAR
 	RET
 IODEFINE ENDP
 
-
 ; ----------------Start of procedure PRINT_2HEX ------------------------
 PRINT_2HEX PROC FAR
 	QUE_BASE	EQU	OFFSET QUEUE_TRANS
@@ -245,9 +244,6 @@ PRINT_2HEX PROC FAR
 	CALL FAR PTR PRINT_CHAR
 	RET
 PRINT_2HEX ENDP
-
-
-
 
 ; ---------------- Start of procedure PRINT_CHAR ------------------------
 PRINT_CHAR PROC FAR
@@ -285,9 +281,6 @@ L_PRINT1:
 	POP BX
 	RET
 PRINT_CHAR ENDP
-
-
-
 
 ;------------------Start of Procedure CHAR2HEX ----------------------------
 CHAR2HEX PROC FAR
