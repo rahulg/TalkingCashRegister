@@ -15,30 +15,30 @@ NAME TIMER
 
 public SERIAL_REC_ACTION, TIMER2_ACTION
 
-INT_VEC_SEG	SEGMENT		AT 	0H
+INT_VEC_SEG	SEGMENT AT 0H
 ; Define the interrupt vector locations
 ; System reserved interrupts
-		ORG	0000H
-	DIV_ZERO	DD	?	;not defined yet
-	SINGLE_STEP	DD	?	;not defined yet
-	NMI_INPUT	DD	START	;start of downloaded program
-	BRK_3_VEC	DD	?	;not defined yet
-	OVERFLOW	DD	?	;not defined yet
-	ARRAY_BND	DD	?	;Array Bounds
-                ORG     020H
-    TIMER0_VEC      DD      ? ;route for timer 0
+ORG 0000H
+	DIV_ZERO	DD	? ;not defined yet
+	SINGLE_STEP	DD	? ;not defined yet
+	NMI_INPUT	DD	START ;start of downloaded program
+	BRK_3_VEC	DD	? ;not defined yet
+	OVERFLOW	DD	? ;not defined yet
+	ARRAY_BND	DD	? ;Array Bounds
+ORG 020H
+    TIMER0_VEC	DD ? ;route for timer 0
 ; Interrupt control unit
-		ORG	030H
+ORG 030H
 	INTP0		DD	SERIAL_INTR
-	INTP1		DD	?       ;external, not used yet
-	INTP2		DD	?	;external, not used yet
-	INTP3		DD	?	;external, not used yet
-    NUMERICS    DD      ?       ;
-    RSVED       DD      ?       ;system reserved
-    TIMER1_VEC  DD      ?       ;route for timer 1
-    TIMER2_VEC  DD      TIMER2_INTR       ;Timer2 Route
+	INTP1		DD	? ;external, not used yet
+	INTP2		DD	? ;external, not used yet
+	INTP3		DD	? ;external, not used yet
+    NUMERICS    DD	?
+    RSVED       DD	? ;system reserved
+    TIMER1_VEC  DD	? ;route for timer 1
+    TIMER2_VEC  DD	TIMER2_INTR ;Timer2 Route
     ;Reserved from 050H to 080H
-	            ORG     080H
+ORG 080H
 ;Interrupt Vector addrerss from 080h (type 32) to 3fCH (type 255)
 ;are avaiable for user software interrupt
 ; Software interrupts
@@ -54,19 +54,19 @@ INT_VEC_SEG	ENDS
 
 
 
-INT_RAM_AREA	SEGMENT
+INT_RAM_AREA SEGMENT
 	QUEUE_LEN	EQU	128
 
 	QUEUE_TRANS	DB	QUEUE_LEN DUP(?)
 	QUEUE_HEAD	DW	0H
 	QUEUE_TAIL	DW	0H
-INT_RAM_AREA	ENDS
+INT_RAM_AREA ENDS
 
 
 $include(80188.inc)
 
 
-MISC_ROUTINE	SEGMENT
+MISC_ROUTINE SEGMENT
 ASSUME CS:MISC_ROUTINE
 
 UPDATE_DISPLAY PROC FAR
@@ -83,8 +83,6 @@ UPDATE_DISPLAY PROC FAR
 	MOV CX, 10
 UPDATE_DISPLAY_LOOP:
 
-	CLI
-
 	MOV AX, DS:DISPLAY_PASS
 
 	XOR DX, DX
@@ -93,8 +91,6 @@ UPDATE_DISPLAY_LOOP:
 	MOV DS:DISPLAY_PASS, AX
 
 	MOV DS:LED_VALS[BX][-1], DL
-
-	STI
 
 	CMP DS:DISPLAY_PASS, 0
 	JE LEADING_ZEROS_START
@@ -113,7 +109,6 @@ LEADING_ZEROS:
 	MOV DS:LED_VALS[BX][-1], LED_BLANK
 	DEC BX
 	JNZ LEADING_ZEROS
-
 
 UPDATE_DISPLAY_END:
 
@@ -140,8 +135,6 @@ UPDATE_CASH_DISPLAY PROC FAR
 	MOV CX, 10
 UPDATE_CASH_DISPLAY_LOOP:
 
-	CLI
-
 	MOV AX, DS:DISPLAY_PASS
 	XOR DX, DX
 	DIV CX
@@ -149,14 +142,11 @@ UPDATE_CASH_DISPLAY_LOOP:
 	MOV DS:DISPLAY_PASS, AX
 	MOV DS:LED_VALS[BX][-1], DL
 
-	STI
-
 	DEC BX
 	CMP BX, 5
 	JAE UPDATE_CASH_DISPLAY_LOOP
 
 	; Last dollar digit (BX=4)
-	CLI
 
 	MOV AX, DS:DISPLAY_PASS
 	XOR DX, DX
@@ -166,15 +156,12 @@ UPDATE_CASH_DISPLAY_LOOP:
 	OR DL, 10h
 	MOV DS:LED_VALS[BX][-1], DL
 
-	STI
-
 	DEC BX
 
 	CMP DS:DISPLAY_PASS, 0
 	JE UPDATE_CASH_DISPLAY_END
 
 UPDATE_CASH_DISPLAY_LOOP2:
-	CLI
 
 	MOV AX, DS:DISPLAY_PASS
 	XOR DX, DX
@@ -182,8 +169,6 @@ UPDATE_CASH_DISPLAY_LOOP2:
 
 	MOV DS:DISPLAY_PASS, AX
 	MOV DS:LED_VALS[BX][-1], DL
-
-	STI
 
 	CMP DS:DISPLAY_PASS, 0
 	JE LEADING_ZEROS_CASH_START
@@ -203,7 +188,6 @@ LEADING_ZEROS_CASH:
 	DEC BX
 	JNZ LEADING_ZEROS_CASH
 
-
 UPDATE_CASH_DISPLAY_END:
 
 	POP DS
@@ -215,144 +199,147 @@ UPDATE_CASH_DISPLAY_END:
 UPDATE_CASH_DISPLAY ENDP
 
 ; ---This procdeure initialize the system I/O area and on-chip devices-----
-IODEFINE	PROC	FAR
-		PUSH	AX
-        PUSH	DX
+IODEFINE PROC FAR
+	PUSH AX
+    PUSH DX
 
 ; Initialize SCU for operation
-		MOV	AL,SMD_DATA
-		OUT	SMD,AL
+	MOV AL, SMD_DATA
+	OUT SMD, AL
 ; Enable serial interrupts
-		MOV	AL,S_INT_ENA
-		OUT	SIER,AL
+	MOV AL, S_INT_ENA
+	OUT SIER, AL
 ; =============== INITIALIZATION OF INTERRUPT CONTROL UNIT =============
 ; Initialize ICU for operation
 
 ; Mask all interrupts except SCU
-                ;disable TX interrupt,ENABLE RX.
-		MOV	AL,1
-		OUT	SIER,AL
+    ;disable TX interrupt,ENABLE RX.
+	MOV AL, 1
+	OUT SIER, AL
 ; SCU use INT0, enable INT0
-	        MOV     DX, INT0_CTRL
-  		XOR	AX,AX
-         	OUT	DX,AL
+	MOV DX, INT0_CTRL
+	XOR AX, AX
+	OUT DX, AL
 ; Mask other Int
-                CLI
-                MOV	DX,IMKW
-		MOV	AX,0EEH
-		OUT 	DX,AL
-		POP	DX
-		POP	AX
-		RET
-IODEFINE	ENDP
+    CLI
+    MOV DX, IMKW
+	MOV AX, 0EEH
+	OUT DX, AL
+	POP DX
+	POP AX
+	RET
+IODEFINE ENDP
 
 
 ; ----------------Start of procedure PRINT_2HEX ------------------------
-PRINT_2HEX 	PROC	FAR
+PRINT_2HEX PROC FAR
 	QUE_BASE	EQU	OFFSET QUEUE_TRANS
 ; The byte to be printed as 2 HEX number is put into AL.
 ; This procedure is then called.
-		CALL	FAR PTR CHAR2HEX
+	CALL FAR PTR CHAR2HEX
 ; Result is return in AX
-		PUSH 	AX
-		MOV	AL,AH
-		CALL	FAR PTR PRINT_CHAR
-		POP	AX
-		CALL	FAR PTR PRINT_CHAR
-		RET
-PRINT_2HEX	ENDP
+	PUSH AX
+	MOV AL, AH
+	CALL FAR PTR PRINT_CHAR
+	POP AX
+	CALL FAR PTR PRINT_CHAR
+	RET
+PRINT_2HEX ENDP
 
 
 
 
 ; ---------------- Start of procedure PRINT_CHAR ------------------------
-PRINT_CHAR	PROC	FAR
+PRINT_CHAR PROC FAR
 ; This procedure is called to put a character into queue for transmission
 ; through the serial port.
 ; The data to be transmitted is put in AL before the procedure is called.
 ; Data is put at the tail. Queue_tail is then inc to point to next loc.
 ; Data is taken from the head. Queue_head is then inc to point to next data.
 
-		PUSH	BX			;Save BX
-		PUSH	ES
+	PUSH BX ;Save BX
+	PUSH ES
 
-		PUSH	AX
+	PUSH AX
 
-		MOV	BX,SEG QUEUE_TAIL	;Init segment register.
-		MOV	ES,BX			;ES now contains seg of INT_RAM_AREA
+	MOV BX, SEG QUEUE_TAIL ;Init segment register.
+	MOV ES, BX ;ES now contains seg of INT_RAM_AREA
 
-		IN	AL,SIER 		;disable TX interrupt.
-		AND	AL,11111101B
-		OUT	SIER,AL
+	IN AL, SIER ;disable TX interrupt.
+	AND AL, 11111101B
+	OUT SIER,AL
 
-		POP	AX
-		MOV	BX,ES:QUEUE_TAIL
-		MOV	ES:QUE_BASE[BX],AL	;Put data to queue_tail.
-		INC	ES:QUEUE_TAIL		;Increment queue_tail
-		CMP	ES:QUEUE_TAIL,QUEUE_LEN	;and wrap around
-		JL	L_PRINT1		;to zero if needed.
-		MOV	ES:QUEUE_TAIL,0
+	POP AX
+	MOV BX, ES:QUEUE_TAIL
+	MOV ES:QUE_BASE[BX], AL ;Put data to queue_tail.
+	INC ES:QUEUE_TAIL ;Increment queue_tail
+	CMP ES:QUEUE_TAIL, QUEUE_LEN ;and wrap around
+	JL L_PRINT1 ;to zero if needed.
+	MOV ES:QUEUE_TAIL,0
 L_PRINT1:
-		IN	AL,SIER			;enable TX interrupt
-		OR	AL,00000010B
-		OUT	SIER,AL
+	IN AL, SIER ;enable TX interrupt
+	OR AL, 00000010B
+	OUT SIER, AL
 
-		POP	ES
-		POP	BX
-		RET
-PRINT_CHAR	ENDP
+	POP ES
+	POP BX
+	RET
+PRINT_CHAR ENDP
 
 
 
 
 ;------------------Start of Procedure CHAR2HEX ----------------------------
-CHAR2HEX	PROC	FAR
+CHAR2HEX PROC FAR
 ; Char to be converted to HEX is put in AL before calling this procedure.
 ; HEX version is return in AX.
-		MOV	AH,AL
-		AND	AL,00001111B
-		CMP	AL,9
-		JG	GT9_1
-		OR	AL,00110000B
-		JMP 	DIGIT2
-GT9_1:		SUB	AL,9
-		OR	AL,01000000B
+	MOV AH, AL
+	AND AL, 00001111B
+	CMP AL, 9
+	JG GT9_1
+	OR AL, 00110000B
+	JMP DIGIT2
+GT9_1:
+	SUB AL, 9
+	OR AL, 01000000B
 DIGIT2:
-		SHR	AH,4
-		CMP	AH,9
-		JG	GT9_2
-		OR	AH,00110000B
-		JMP	DONE
-GT9_2:		SUB	AH,9
-		OR	AH,01000000B
+	SHR AH, 4
+	CMP AH, 9
+	JG GT9_2
+	OR AH, 00110000B
+	JMP DONE
+GT9_2:
+	SUB AH,9
+	OR AH, 01000000B
 DONE:
-		RET
-CHAR2HEX	ENDP
+	RET
+CHAR2HEX ENDP
 
-Set_timer2      proc Far
-	push ax
-	push dx
-	;Initialize Timer2
-	mov ax, 0;
-	mov dx, T2_CNT;
+SET_TIMER2 PROC FAR
+	PUSH AX
+	PUSH DX
+
+	;initialize timer2
+	MOV AX, 0;
+	MOV DX, T2_CNT;
 	OUT DX, AL
 
 	MOV AX, 180;
 	MOV DX, T2_CA;
 	OUT DX, AL
 
-	MOV AX,0E001H
+	MOV AX, 0E001H
 	MOV DX, T2_CON
 	OUT DX, AL
 
 	MOV DX, TIMER_CTRL
 	MOV AL, 01H
 	OUT DX, AL
-	pop dx
-	pop ax
+	POP DX
+	POP AX
 
-ret
-Set_timer2 endp
+	RET
+SET_TIMER2 ENDP
 ; ************************************************************************
 ;			INTERRUPT ROUTINES				 *
 ; ************************************************************************
@@ -366,98 +353,108 @@ Set_timer2 endp
 ;Interrupt Routines Modified accordly to fit 80C188XL
 ;+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 SERIAL_INTR:
-		PUSH	AX			;save registers
-		PUSH	BX
-        PUSH    DX
+	CLI
 
+	PUSH AX
+	PUSH BX
+    PUSH DX
 
+	IN AL, IIR ;read in serial INT ID
+    AND AL, 00000111B
+	CMP AL, 00000100B ;check if rx interrupt
+	JE RECEIVE_INTR
 
-
-		IN	AL,IIR			;read in serial INT ID
-        AND AL,00000111B
-		CMP AL,00000100B		;check if rx interrupt
-		JE	RECEIVE_INTR
-
-		CMP AL,00000010B		;check if tx interrupt
-		JE	TRANSMIT_INTR
-
+	CMP AL, 00000010B ;check if tx interrupt
+	JE TRANSMIT_INTR
 
 ;RESET_INT_CTL
-        MOV DX, EOI
-        MOV AX, 12
-        OUT DX, AL
+    MOV DX, EOI
+    MOV AX, 12
+    OUT DX, AL
 
-        POP     DX
-		POP	BX			;false serial interrupt
-		POP	AX
-		IRET				;return
+    POP DX
+	POP BX			;false serial interrupt
+	POP AX
+
+	STI
+	IRET				;return
 
 RECEIVE_INTR:
 
-		IN	AL,SRB
+	IN AL, SRB
 ; Information received will be used by user routine
 ; Action to be taken will be contained in SERIAL_REC_ACTION
-		CALL	FAR PTR SERIAL_REC_ACTION
+	CALL FAR PTR SERIAL_REC_ACTION
 
-		MOV DX, EOI
-        MOV AX, 12
-        OUT DX, AL
-		POP     DX
-		POP	BX			;false serial interrupt
-		POP	AX
-		IRET
+	MOV DX, EOI
+    MOV AX, 12
+    OUT DX, AL
+
+	POP DX
+	POP BX ;false serial interrupt
+	POP AX
+
+	STI
+	IRET
 
 TRANSMIT_INTR:
 
-		PUSH	ES			;save ES
-		MOV	BX,SEG QUEUE_TAIL	;set ES to SERIAL_Q_SEG
-		MOV	ES,BX
-		MOV	BX,ES:QUEUE_TAIL
-		CMP	BX,ES:QUEUE_HEAD	;more data to be transmitted?
-		JE	L_TX2
-		MOV	BX,ES:QUEUE_HEAD	;get data from queue
-		MOV	AL,ES:QUE_BASE[BX]
-		OUT	STB,AL			;tx data
-		INC	ES:QUEUE_HEAD		;point to next data
-		CMP	ES:QUEUE_HEAD,QUEUE_LEN ;wrap around if necessary
-		JL	L_TX1
-		MOV	ES:QUEUE_HEAD,0
+	PUSH ES
+	MOV BX, SEG QUEUE_TAIL ;set ES to SERIAL_Q_SEG
+	MOV ES, BX
+	MOV BX, ES:QUEUE_TAIL
+	CMP BX, ES:QUEUE_HEAD ;more data to be transmitted?
+	JE L_TX2
+	MOV BX, ES:QUEUE_HEAD ;get data from queue
+	MOV AL, ES:QUE_BASE[BX]
+	OUT STB, AL ;tx data
+	INC ES:QUEUE_HEAD ;point to next data
+	CMP ES:QUEUE_HEAD, QUEUE_LEN ;wrap around if necessary
+	JL L_TX1
+	MOV ES:QUEUE_HEAD,0
 L_TX1:
-		MOV	BX,ES:QUEUE_TAIL
-		CMP	BX,ES:QUEUE_HEAD	;more data to be transmitted?
-		JNE	L_TX3
+	MOV BX, ES:QUEUE_TAIL
+	CMP BX, ES:QUEUE_HEAD ;more data to be transmitted?
+	JNE L_TX3
 L_TX2:
-		IN	AL,SIER			;no more, disable TX interrupt.
-		AND    	AL,11111101B
-		OUT	SIER,AL
+	IN AL, SIER ;no more, disable TX interrupt.
+	AND AL, 11111101B
+	OUT SIER,AL
 L_TX3:
 
 ;RESET_INT_CTL
-	    MOV DX, EOI
-	    MOV AX, 12
-	    OUT DX, AL
-  		POP	ES			;restore original ES(transmit)
+    MOV DX, EOI
+    MOV AX, 12
+    OUT DX, AL
+	POP ES
 
-        POP     DX
-        POP	BX			;return serial interrupt
-		POP	AX
-		IRET
+    POP DX
+    POP BX ;return serial interrupt
+	POP AX
+
+	STI
+	IRET
 ; **************** End of SERIAL_INTR service routine ************************
 
 
 
 ; **************** Start of TIMER0_INTR service routine ******************
 TIMER2_INTR:
+	CLI
 	PUSH AX
+	PUSH DX
 
 	; Action to be taken on timer0 interrupt to be written by user
 	CALL	FAR PTR TIMER2_ACTION
 
-	POP AX
 	;RESET_INT_CTL
 	MOV DX, EOI
 	MOV AX, 8
 	OUT DX, AL
+
+	POP DX
+	POP AX
+	STI
 	IRET
 ; **************** End of TIMER2_INTR service routine ************************
 
@@ -465,8 +462,8 @@ MISC_ROUTINE	ENDS
 
 
 STACK_SEG	SEGMENT
-	DB	256 DUP(?)
-	TOS	LABEL	WORD
+						DB	256 DUP(?)
+	TOS					LABEL WORD
 STACK_SEG	ENDS
 
 ; --------------- Cash Register Begins --------------------
@@ -620,20 +617,20 @@ DATA_SEG SEGMENT
 
 DATA_SEG ENDS
 
-CODE_SEG	SEGMENT
+CODE_SEG SEGMENT
 
-	PUBLIC		START
+	PUBLIC START
 
-ASSUME	CS:CODE_SEG, SS:STACK_SEG
+ASSUME CS:CODE_SEG, SS:STACK_SEG
 
 START:
 ;initialize stack area
-	MOV	AX,STACK_SEG
-	MOV	SS,AX
-	LEA	SP,TOS
+	MOV AX, STACK_SEG
+	MOV SS, AX
+	LEA SP, TOS
 
 ; Initialize the on-chip pheripherals
-	CALL	FAR PTR	IODEFINE
+	CALL FAR PTR IODEFINE
 
 	IOCWR_VAL		EQU	0089h
 	MPCS_VAL		EQU	2083h
@@ -668,7 +665,7 @@ START:
 
 
 ; ^^^^^^^^^^^^^^^^^  Start of User Main Routine  ^^^^^^^^^^^^^^^^^^
-	call set_timer2
+	CALL SET_TIMER2
 	STI
 
 	MOV AX, DATA_SEG
@@ -860,7 +857,6 @@ M_TXN_POLL2FAR:
 	; Idle state
 M_TXN_IDLE:
 
-	CLI
 	; Primary Keypad
 	CMP BL, 01h
 	JNE M_TXN_IDLE_NOTPRI
@@ -871,13 +867,9 @@ M_TXN_IDLE:
 	MOV AH, 10
 	MUL AH
 
-	STI
-
 	; Hard cap at 255
 	TEST AH, AH
 	JNZ M_TXN_QTYBOOM
-
-	CLI
 
 	ADD AL, BL
 
@@ -885,8 +877,6 @@ M_TXN_IDLE:
 
 	XOR AH, AH
 	MOV DS:DISPLAY_PASS, AX
-
-	STI
 
 	CALL FAR PTR UPDATE_DISPLAY
 
@@ -1023,7 +1013,6 @@ M_QRY_POLL:
 	CMP AL, DS:KEYPAD_QUEUE_HEAD
 	JAE M_QRY_POLL
 
-	CLI
 
 	XOR BH, BH
 	MOV BL, DS:KEYPAD_QUEUE_TAIL
@@ -1056,7 +1045,6 @@ M_QRY_POLL:
 	OR AL, BL
 	MOV DS:PORTA_VAL, AL
 
-	STI
 
 	CALL FAR PTR UPDATE_DISPLAY
 
@@ -1131,7 +1119,6 @@ TIMER2_ACTION	PROC	FAR
 	PUSH AX
 	PUSH DS
 
-	CLI
 
 	; Restore DS
 	MOV	AX,DATA_SEG
@@ -1155,7 +1142,6 @@ NO_SOUND:
 
 HAS_SOUND:
 
-	STI
 
 	; Counter to limit LED refresh rate
 	DEC DS:LED_COUNTER
@@ -1289,7 +1275,6 @@ DISPLAY_HANDLER PROC NEAR
 	MOV DX, PORTA
 	OUT DX, AL
 
-	CLI
 	; Output bit pattern for desired digit
 	XOR BH, BH
 	MOV BL, DS:LED_CURRENT
@@ -1306,7 +1291,6 @@ DISPLAY_HANDLER PROC NEAR
 	MOV DX, DISPLAY_SELECT
 	NOT AL
 	OUT DX, AL
-	STI
 
 	; Switch segments
 	INC DS:LED_CURRENT
@@ -1394,7 +1378,6 @@ KR1_COL3:
 	JE KR1_DONE
 
 	; Enqueue
-	CLI
 
 	XOR BH, BH
 	MOV BL, DS:KEYPAD_QUEUE_HEAD
@@ -1418,13 +1401,11 @@ KR1_NOTZERO:
 
 	MOV DS:KEYR_PRI_SUSPECT, 0
 
-	STI
 
 	JMP KR1_DONE
 
 KR1_SUSPECT:
 
-	CLI
 
 	MOV CL, 00h
 
@@ -1444,7 +1425,6 @@ KR1_ROWLOOP:
 
 	MOV DS:KEYR_PRI_SUSPECT, AL
 
-	STI
 
 KR1_DONE:
 	POP DS
@@ -1526,7 +1506,6 @@ KR2_COL3:
 	JE KR2_DONE
 
 	; Enqueue
-	CLI
 
 	XOR BH, BH
 	MOV BL, DS:KEYPAD_QUEUE_HEAD
@@ -1550,13 +1529,11 @@ KR2_NOTZERO:
 
 	MOV DS:KEYR_SEC_SUSPECT, 0
 
-	STI
 
 	JMP KR2_DONE
 
 KR2_SUSPECT:
 
-	CLI
 
 	MOV CL, 00h
 
@@ -1576,7 +1553,6 @@ KR2_ROWLOOP:
 
 	MOV DS:KEYR_SEC_SUSPECT, AL
 
-	STI
 
 KR2_DONE:
 	POP DS
