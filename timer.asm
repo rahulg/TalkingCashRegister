@@ -950,12 +950,12 @@ M_TXN_HASH2:
 	; Double hash
 	; Commit everything
 	XOR BH, BH
-	MOV BL, 09h
+	MOV BL, 10
 M_TXN_NEXTPROD:
-	MOV AL, DS:TXN_QTYS[BX]
+	MOV AL, DS:TXN_QTYS[BX][-1]
 	; TODO: check for more than what we have please!
-	SUB DS:ITEM_INVENTORY[BX], AL
-	MOV DS:TXN_QTYS[BX], 0
+	SUB DS:ITEM_INVENTORY[BX][-1], AL
+	MOV DS:TXN_QTYS[BX][-1], 0
 	DEC BX
 JNZ M_TXN_NEXTPROD
 
@@ -974,9 +974,9 @@ M_TXN_STAR2:
 
 	; Double star
 	XOR BH, BH
-	MOV BL, 09h
+	MOV BL, 10
 M_TXN_RMNEXTPROD:
-	MOV DS:TXN_QTYS[BX], 0
+	MOV DS:TXN_QTYS[BX][-1], 0
 	DEC BX
 	JNZ M_TXN_RMNEXTPROD
 
