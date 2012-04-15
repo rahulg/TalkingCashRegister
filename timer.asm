@@ -13,8 +13,6 @@ NAME TIMER
 ; or distributed without prior permission from the author.
 ; =========================================================================
 
-public SERIAL_REC_ACTION, TIMER2_ACTION
-
 INT_VEC_SEG	SEGMENT AT 0H
 ; Define the interrupt vector locations
 ; System reserved interrupts
