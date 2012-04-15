@@ -74,10 +74,6 @@ UPDATE_DISPLAY PROC FAR
 	PUSH BX
 	PUSH CX
 	PUSH DX
-	PUSH DS
-
-	MOV BX, DATA_SEG
-	MOV DS, BX
 
 	MOV BX, 06h
 	MOV CX, 10
@@ -112,7 +108,6 @@ LEADING_ZEROS:
 
 UPDATE_DISPLAY_END:
 
-	POP DS
 	POP DX
 	POP CX
 	POP BX
@@ -125,10 +120,6 @@ UPDATE_CASH_DISPLAY PROC FAR
 	PUSH BX
 	PUSH CX
 	PUSH DX
-	PUSH DS
-
-	MOV BX, DATA_SEG
-	MOV DS, BX
 
 	; Cents
 	MOV BX, 6
@@ -190,7 +181,6 @@ LEADING_ZEROS_CASH:
 
 UPDATE_CASH_DISPLAY_END:
 
-	POP DS
 	POP DX
 	POP CX
 	POP BX
@@ -232,6 +222,7 @@ IODEFINE ENDP
 
 ; ----------------Start of procedure PRINT_2HEX ------------------------
 PRINT_2HEX PROC FAR
+	PUSH AX
 ; The byte to be printed as 2 HEX number is put into AL.
 ; This procedure is then called.
 	CALL FAR PTR CHAR2HEX
@@ -241,6 +232,7 @@ PRINT_2HEX PROC FAR
 	CALL FAR PTR PRINT_CHAR
 	POP AX
 	CALL FAR PTR PRINT_CHAR
+	POP AX
 	RET
 PRINT_2HEX ENDP
 
@@ -251,7 +243,7 @@ PRINT_CHAR PROC FAR
 ; The data to be transmitted is put in AL before the procedure is called.
 ; Data is put at the tail. Queue_tail is then inc to point to next loc.
 ; Data is taken from the head. Queue_head is then inc to point to next data.
-
+	PUSH AX
 	PUSH BX ;Save BX
 	PUSH ES
 
@@ -278,6 +270,7 @@ L_PRINT1:
 
 	POP ES
 	POP BX
+	POP AX
 	RET
 PRINT_CHAR ENDP
 
@@ -327,9 +320,9 @@ SET_TIMER2 PROC FAR
 	MOV DX, TIMER_CTRL
 	MOV AL, 01H
 	OUT DX, AL
+
 	POP DX
 	POP AX
-
 	RET
 SET_TIMER2 ENDP
 ; ************************************************************************
@@ -1310,10 +1303,6 @@ DISPLAY_HANDLER PROC NEAR
 	PUSH AX
 	PUSH BX
 	PUSH DX
-	PUSH DS
-
-	MOV AX, DATA_SEG
-	MOV DS, AX
 
 	; Simple LEDs
 	MOV AL, DS:PORTA_VAL
@@ -1346,7 +1335,6 @@ DISPLAY_HANDLER PROC NEAR
 	MOV DS:LED_CURRENT, 00h
 
 LED_CUR_SKIP:
-	POP DS
 	POP DX
 	POP BX
 	POP AX
@@ -1358,10 +1346,6 @@ KEYPAD1_READER PROC NEAR
 	PUSH BX
 	PUSH CX
 	PUSH DX
-	PUSH DS
-
-	MOV AX, DATA_SEG
-	MOV DS, AX
 
 KR1_COL1:
 
@@ -1473,7 +1457,6 @@ KR1_ROWLOOP:
 
 
 KR1_DONE:
-	POP DS
 	POP DX
 	POP CX
 	POP BX
@@ -1486,10 +1469,6 @@ KEYPAD2_READER PROC NEAR
 	PUSH BX
 	PUSH CX
 	PUSH DX
-	PUSH DS
-
-	MOV AX, DATA_SEG
-	MOV DS, AX
 
 KR2_COL1:
 
@@ -1601,7 +1580,6 @@ KR2_ROWLOOP:
 
 
 KR2_DONE:
-	POP DS
 	POP DX
 	POP CX
 	POP BX
