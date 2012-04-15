@@ -455,14 +455,8 @@ STACK_SEG ENDS
 
 DATA_SEG SEGMENT
 
-	TIMER0_MESS			DB	10,13,'TIMER2 INTERRUPT    '
-	T_COUNT				DB	2FH
-	T_COUNT_SET			DB	2FH
-	REC_MESS			DB	10,13,'Period of timer2 =     '
-
 	HEXCHAR				DB	'0', '1', '2', '3', '4', '5', '6', '7'
 						DB	'8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
-
 
 	LED_COUNTER_MAX		EQU	10h
 	LED_COUNTER			DB	10h
