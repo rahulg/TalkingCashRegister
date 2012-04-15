@@ -345,8 +345,6 @@ SET_TIMER2 ENDP
 ;Interrupt Routines Modified accordly to fit 80C188XL
 ;+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 SERIAL_INTR:
-	CLI
-
 	PUSH AX
 	PUSH BX
     PUSH DX
@@ -368,15 +366,15 @@ SERIAL_INTR:
 	POP BX			;false serial interrupt
 	POP AX
 
-	STI
 	IRET				;return
 
 RECEIVE_INTR:
+	CLI
 
 	IN AL, SRB
 ; Information received will be used by user routine
 ; Action to be taken will be contained in SERIAL_REC_ACTION
-	;CALL FAR PTR SERIAL_REC_ACTION
+	CALL FAR PTR SERIAL_REC_ACTION
 
 	MOV DX, EOI
     MOV AX, 12
@@ -389,6 +387,7 @@ RECEIVE_INTR:
 	IRET
 
 TRANSMIT_INTR:
+	CLI
 
 	PUSH ES
 	MOV BX, SEG QUEUE_TAIL ;set ES to SERIAL_Q_SEG
@@ -646,10 +645,6 @@ START:
 	MOV DX, MMCSBA
 	MOV AX, MMCS_VAL
 	OUT DX, AX
-
-	MOV AX, AUDIO_EEP
-	MOV ES, AX
-
 
 ; ^^^^^^^^^^^^^^^^^  Start of User Main Routine  ^^^^^^^^^^^^^^^^^^
 	CALL SET_TIMER2
@@ -1425,6 +1420,7 @@ SERIAL_REC_ACTION PROC FAR
 	PUSH AX
 	PUSH BX
 	PUSH CX
+	PUSH DX
 	PUSH DS
 
 	MOV BX, DATA_SEG		;initialize data segment register
@@ -1436,31 +1432,33 @@ SERIAL_REC_ACTION PROC FAR
 	JMP SER_RET
 
 SER_LT:
-	MOV AL, DS:PORTA_VAL
-	MOV DS:PORTA_VAL, 0FFh
-	MOV CX, 10h
-SER_LT_PA:
+	MOV AL, 'L'
+	CALL FAR PTR PRINT_CHAR
+
+	MOV DX, PORTA
+	OUT DX, AL
+
+	MOV DX, DISPLAY_VAL
+	MOV AL, 0FFh
+	OUT DX, AL
+
+	MOV DX, DISPLAY_SELECT
+	MOV AL, 00h
+	OUT DX, AL
+
+	MOV BX, 06h
+SER_LT_DELAY:
+	MOV CX, 0FFFFh
+SER_LT_DELAY_IN:
 	NOP
-	LOOPNZ SER_LT_PA
-	MOV DS:PORTA_VAL, AL
-
-	MOV BX, 6
-SER_LT_SSEG:
-	MOV AL, DS:LED_VALS[BX][-1]
-	MOV DS:LED_VALS[BX][-1], 18h
-
-	MOV CX, 10h
-SER_LT_SSEG_DEL:
-	NOP
-	LOOPNZ SER_LT_SSEG_DEL
-
-	MOV DS:LED_VALS[BX][-1], AL
+	LOOPNZ SER_LT_DELAY_IN
 
 	DEC BX
-	JNZ SER_LT_SSEG
+	JNZ SER_LT_DELAY
 
 SER_RET:
 	POP	DS
+	POP DX
 	POP	CX
 	POP	BX
 	POP AX
