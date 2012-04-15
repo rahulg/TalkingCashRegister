@@ -232,7 +232,6 @@ IODEFINE ENDP
 
 ; ----------------Start of procedure PRINT_2HEX ------------------------
 PRINT_2HEX PROC FAR
-	QUE_BASE	EQU	OFFSET QUEUE_TRANS
 ; The byte to be printed as 2 HEX number is put into AL.
 ; This procedure is then called.
 	CALL FAR PTR CHAR2HEX
@@ -267,7 +266,7 @@ PRINT_CHAR PROC FAR
 
 	POP AX
 	MOV BX, ES:QUEUE_TAIL
-	MOV ES:QUE_BASE[BX], AL ;Put data to queue_tail.
+	MOV ES:QUEUE_TRANS[BX], AL ;Put data to queue_tail.
 	INC ES:QUEUE_TAIL ;Increment queue_tail
 	CMP ES:QUEUE_TAIL, QUEUE_LEN ;and wrap around
 	JL L_PRINT1 ;to zero if needed.
@@ -399,7 +398,7 @@ TRANSMIT_INTR:
 	CMP BX, ES:QUEUE_HEAD ;more data to be transmitted?
 	JE L_TX2
 	MOV BX, ES:QUEUE_HEAD ;get data from queue
-	MOV AL, ES:QUE_BASE[BX]
+	MOV AL, ES:QUEUE_TRANS[BX]
 	OUT STB, AL ;tx data
 	INC ES:QUEUE_HEAD ;point to next data
 	CMP ES:QUEUE_HEAD, QUEUE_LEN ;wrap around if necessary
@@ -451,13 +450,13 @@ TIMER2_INTR:
 	IRET
 ; **************** End of TIMER2_INTR service routine ************************
 
-MISC_ROUTINE	ENDS
+MISC_ROUTINE ENDS
 
 
-STACK_SEG	SEGMENT
+STACK_SEG SEGMENT
 						DB	256 DUP(?)
 	TOS					LABEL WORD
-STACK_SEG	ENDS
+STACK_SEG ENDS
 
 ; --------------- Cash Register Begins --------------------
 
