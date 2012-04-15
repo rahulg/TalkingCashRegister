@@ -430,7 +430,7 @@ TIMER2_INTR:
 	PUSH DX
 
 	; Action to be taken on timer0 interrupt to be written by user
-	CALL	FAR PTR TIMER2_ACTION
+	CALL FAR PTR TIMER2_ACTION
 
 	;RESET_INT_CTL
 	MOV DX, EOI
@@ -854,13 +854,13 @@ M_TXN_IDLE:
 	TEST AH, AH
 	JNZ M_TXN_QTYBOOM
 
-	; Hard cap at inventory limit
+	ADD AL, BL
+
+	; Cap at inventory limit
 	XOR BH, BH
 	MOV BL, DS:TXN_ITEM
 	CMP AL, DS:ITEM_INVENTORY[BX]
 	JA M_TXN_QTYBOOM
-
-	ADD AL, BL
 
 	MOV DS:TXN_QTY, AL
 	CALL NEAR PTR SHOW_TXNSTATE
