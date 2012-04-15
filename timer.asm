@@ -99,83 +99,6 @@ IODEFINE PROC FAR
 	RET
 IODEFINE ENDP
 
-; ----------------Start of procedure PRINT_2HEX ------------------------
-PRINT_2HEX PROC FAR
-; The byte to be printed as 2 HEX number is put into AL.
-; This procedure is then called.
-	CALL FAR PTR CHAR2HEX
-; Result is return in AX
-	PUSH AX
-	MOV AL, AH
-	CALL FAR PTR PRINT_CHAR
-	POP AX
-	CALL FAR PTR PRINT_CHAR
-	RET
-PRINT_2HEX ENDP
-
-; ---------------- Start of procedure PRINT_CHAR ------------------------
-PRINT_CHAR PROC FAR
-; This procedure is called to put a character into queue for transmission
-; through the serial port.
-; The data to be transmitted is put in AL before the procedure is called.
-; Data is put at the tail. Queue_tail is then inc to point to next loc.
-; Data is taken from the head. Queue_head is then inc to point to next data.
-
-	PUSH BX ;Save BX
-	PUSH ES
-
-	PUSH AX
-
-	MOV BX, SEG QUEUE_TAIL ;Init segment register.
-	MOV ES, BX ;ES now contains seg of INT_RAM_AREA
-
-	IN AL, SIER ;disable TX interrupt.
-	AND AL, 11111101B
-	OUT SIER,AL
-
-	POP AX
-	MOV BX, ES:QUEUE_TAIL
-	MOV ES:QUEUE_TRANS[BX], AL ;Put data to queue_tail.
-	INC ES:QUEUE_TAIL ;Increment queue_tail
-	CMP ES:QUEUE_TAIL, QUEUE_LEN ;and wrap around
-	JL L_PRINT1 ;to zero if needed.
-	MOV ES:QUEUE_TAIL,0
-L_PRINT1:
-	IN AL, SIER ;enable TX interrupt
-	OR AL, 00000010B
-	OUT SIER, AL
-
-	POP ES
-	POP BX
-	RET
-PRINT_CHAR ENDP
-
-;------------------Start of Procedure CHAR2HEX ----------------------------
-CHAR2HEX PROC FAR
-; Char to be converted to HEX is put in AL before calling this procedure.
-; HEX version is return in AX.
-	MOV AH, AL
-	AND AL, 00001111B
-	CMP AL, 9
-	JG GT9_1
-	OR AL, 00110000B
-	JMP DIGIT2
-GT9_1:
-	SUB AL, 9
-	OR AL, 01000000B
-DIGIT2:
-	SHR AH, 4
-	CMP AH, 9
-	JG GT9_2
-	OR AH, 00110000B
-	JMP DONE
-GT9_2:
-	SUB AH,9
-	OR AH, 01000000B
-DONE:
-	RET
-CHAR2HEX ENDP
-
 SET_TIMER2 PROC FAR
 	PUSH AX
 	PUSH DX
@@ -294,8 +217,6 @@ L_TX3:
 	STI
 	IRET
 ; **************** End of SERIAL_INTR service routine ************************
-
-
 
 ; **************** Start of TIMER2_INTR service routine ******************
 TIMER2_INTR:
@@ -541,7 +462,7 @@ START:
 	MOV AX, MMCS_VAL
 	OUT DX, AX
 
-	CALL SET_TIMER2
+	CALL FAR PTR SET_TIMER2
 	STI
 
 	MOV AX, DATA_SEG
@@ -910,7 +831,7 @@ M_TXN_HASH3FAR:
 	MOV CX, 16
 M_TXN_HEADLOOP:
 	MOV AL, '='
-	CALL FAR PTR PRINT_CHAR
+	CALL NEAR PTR PRINTCHAR
 	LOOPNZ M_TXN_HEADLOOP
 
 	POP CX
@@ -941,7 +862,7 @@ M_TXN_NEXTPROD:
 	CALL NEAR PTR SER_STR_WR
 
 	PUSH AX
-	CALL FAR PTR PRINT_2HEX
+	CALL NEAR PTR PRINT2HEX
 	POP AX
 
 
@@ -976,7 +897,7 @@ M_TXN_NOPRINT:
 	MOV CX, 16
 M_TXN_TTLLOOP:
 	MOV AL, '-'
-	CALL FAR PTR PRINT_CHAR
+	CALL NEAR PTR PRINTCHAR
 	LOOPNZ M_TXN_TTLLOOP
 
 	POP CX
@@ -996,9 +917,9 @@ M_TXN_TTLLOOP:
 
 	PUSH AX
 	MOV AL, AH
-	CALL FAR PTR PRINT_2HEX
+	CALL NEAR PTR PRINT2HEX
 	POP AX
-	CALL FAR PTR PRINT_2HEX
+	CALL NEAR PTR PRINT2HEX
 
 	MOV DS:TXN_STATE, TXN_STATE_CHANGE
 	JMP M_TXN_POLL3FAR
@@ -1124,9 +1045,9 @@ CHANGE_ENTERED:
 
 	PUSH AX
 	MOV AL, AH
-	CALL FAR PTR PRINT_2HEX
+	CALL NEAR PTR PRINT2HEX
 	POP AX
-	CALL FAR PTR PRINT_2HEX
+	CALL NEAR PTR PRINT2HEX
 
 	; Speak: change amount
 	MOV AX, DS:TXN_CHANGE
@@ -1153,9 +1074,9 @@ CHANGE_ENTERED:
 
 	PUSH AX
 	MOV AL, AH
-	CALL FAR PTR PRINT_2HEX
+	CALL NEAR PTR PRINT2HEX
 	POP AX
-	CALL FAR PTR PRINT_2HEX
+	CALL NEAR PTR PRINT2HEX
 
 	MOV DS:SER_STR_ADDR, OFFSET STRING_CRLF
 	MOV DS:SER_STR_LEN, 2
@@ -1164,7 +1085,7 @@ CHANGE_ENTERED:
 	MOV CX, 16
 M_TXN_TAILLOOP:
 	MOV AL, '='
-	CALL FAR PTR PRINT_CHAR
+	CALL NEAR PTR PRINTCHAR
 	LOOPNZ M_TXN_TAILLOOP
 
 	; Speak: in
@@ -1335,7 +1256,7 @@ MODE_232STATS PROC NEAR
 	MOV CX, 16
 M_232_HEADLOOP:
 	MOV AL, '~'
-	CALL FAR PTR PRINT_CHAR
+	CALL NEAR PTR PRINTCHAR
 	LOOPNZ M_232_HEADLOOP
 
 	XOR BH, BH
@@ -1360,7 +1281,7 @@ M_232_NEXTPROD:
 	CALL NEAR PTR SER_STR_WR
 
 	MOV AL, DS:SESSION_SALES[BX][-1]
-	CALL FAR PTR PRINT_2HEX
+	CALL NEAR PTR PRINT2HEX
 
 	DEC BX
 	JNZ M_232_NEXTPROD
@@ -1372,7 +1293,7 @@ M_232_NEXTPROD:
 	MOV CX, 16
 M_232_TTLLOOP:
 	MOV AL, '-'
-	CALL FAR PTR PRINT_CHAR
+	CALL NEAR PTR PRINTCHAR
 	LOOPNZ M_232_TTLLOOP
 
 	MOV DS:SER_STR_ADDR, OFFSET STRING_CRLF
@@ -1390,9 +1311,9 @@ M_232_TTLLOOP:
 	MOV AX, DS:SESSION_TALLY
 	PUSH AX
 	MOV AL, AH
-	CALL FAR PTR PRINT_2HEX
+	CALL NEAR PTR PRINT2HEX
 	POP AX
-	CALL FAR PTR PRINT_2HEX
+	CALL NEAR PTR PRINT2HEX
 
 	MOV DS:SER_STR_ADDR, OFFSET STRING_CRLF
 	MOV DS:SER_STR_LEN, 2
@@ -1401,7 +1322,7 @@ M_232_TTLLOOP:
 	MOV CX, 16
 M_232_TAILLOOP:
 	MOV AL, '~'
-	CALL FAR PTR PRINT_CHAR
+	CALL NEAR PTR PRINTCHAR
 	LOOPNZ M_232_TAILLOOP
 
 	POP SI
@@ -1853,7 +1774,7 @@ SER_STR_WR PROC NEAR
 
 SER_STR_LOOP:
 	MOV AL, [SI][BX]
-	CALL FAR PTR PRINT_CHAR
+	CALL NEAR PTR PRINTCHAR
 	INC BX
 	LOOPNZ SER_STR_LOOP
 
@@ -1864,6 +1785,86 @@ SER_STR_LOOP:
 	POP AX
 	RET
 SER_STR_WR ENDP
+
+; ===================== PRINT2HEX ===================== ;
+
+PRINT2HEX PROC NEAR
+; The byte to be printed as 2 HEX number is put into AL.
+; This procedure is then called.
+	CALL NEAR PTR CHAR2HEX
+; Result is return in AX
+	PUSH AX
+	MOV AL, AH
+	CALL NEAR PTR PRINTCHAR
+	POP AX
+	CALL NEAR PTR PRINTCHAR
+	RET
+PRINT2HEX ENDP
+
+; ===================== PRINTCHAR ===================== ;
+
+PRINTCHAR PROC NEAR
+; This procedure is called to put a character into queue for transmission
+; through the serial port.
+; The data to be transmitted is put in AL before the procedure is called.
+; Data is put at the tail. Queue_tail is then inc to point to next loc.
+; Data is taken from the head. Queue_head is then inc to point to next data.
+
+	PUSH BX ;Save BX
+	PUSH ES
+
+	PUSH AX
+
+	MOV BX, SEG QUEUE_TAIL ;Init segment register.
+	MOV ES, BX ;ES now contains seg of INT_RAM_AREA
+
+	IN AL, SIER ;disable TX interrupt.
+	AND AL, 11111101B
+	OUT SIER,AL
+
+	POP AX
+	MOV BX, ES:QUEUE_TAIL
+	MOV ES:QUEUE_TRANS[BX], AL ;Put data to queue_tail.
+	INC ES:QUEUE_TAIL ;Increment queue_tail
+	CMP ES:QUEUE_TAIL, QUEUE_LEN ;and wrap around
+	JL L_PRINT1 ;to zero if needed.
+	MOV ES:QUEUE_TAIL,0
+L_PRINT1:
+	IN AL, SIER ;enable TX interrupt
+	OR AL, 00000010B
+	OUT SIER, AL
+
+	POP ES
+	POP BX
+	RET
+PRINTCHAR ENDP
+
+; ===================== CHAR2HEX  ===================== ;
+
+CHAR2HEX PROC NEAR
+; Char to be converted to HEX is put in AL before calling this procedure.
+; HEX version is return in AX.
+	MOV AH, AL
+	AND AL, 00001111B
+	CMP AL, 9
+	JG GT9_1
+	OR AL, 00110000B
+	JMP DIGIT2
+GT9_1:
+	SUB AL, 9
+	OR AL, 01000000B
+DIGIT2:
+	SHR AH, 4
+	CMP AH, 9
+	JG GT9_2
+	OR AH, 00110000B
+	JMP DONE
+GT9_2:
+	SUB AH,9
+	OR AH, 01000000B
+DONE:
+	RET
+CHAR2HEX ENDP
 
 ; ==================== END SERIAL  ==================== ;
 
@@ -1925,17 +1926,17 @@ SER_QTY_ITEM:
 	PUSH AX
 	PUSH AX
 	MOV AL, '['
-	CALL FAR PTR PRINT_CHAR
+	CALL NEAR PTR PRINTCHAR
 	POP AX
 
-	CALL FAR PTR PRINT_CHAR
+	CALL NEAR PTR PRINTCHAR
 	POP AX
 
 	SUB AL, 30h
 	MOV DS:SER_TMP_DEST, AL
 
 	MOV AL, ':'
-	CALL FAR PTR PRINT_CHAR
+	CALL NEAR PTR PRINTCHAR
 
 	JMP SER_RET
 
@@ -1957,7 +1958,7 @@ SER_QTY:
 	JE SER_QTY_FIN
 
 	PUSH AX
-	CALL FAR PTR PRINT_CHAR
+	CALL NEAR PTR PRINTCHAR
 	POP AX
 
 	SUB AL, 30h
@@ -1983,9 +1984,9 @@ SER_QTY_FIN:
 	MOV DS:ITEM_INVENTORY[BX], AL
 
 	MOV AL, ']'
-	CALL FAR PTR PRINT_CHAR
+	CALL NEAR PTR PRINTCHAR
 	MOV AL, ' '
-	CALL FAR PTR PRINT_CHAR
+	CALL NEAR PTR PRINTCHAR
 
 	MOV DS:SER_TMP_DEST, 0
 	MOV DS:SER_TMP_B, 0
@@ -2003,17 +2004,17 @@ SER_PX_ITEM:
 	PUSH AX
 	PUSH AX
 	MOV AL, '['
-	CALL FAR PTR PRINT_CHAR
+	CALL NEAR PTR PRINTCHAR
 	POP AX
 
-	CALL FAR PTR PRINT_CHAR
+	CALL NEAR PTR PRINTCHAR
 	POP AX
 
 	SUB AL, 30h
 	MOV DS:SER_TMP_DEST, AL
 
 	MOV AL, ':'
-	CALL FAR PTR PRINT_CHAR
+	CALL NEAR PTR PRINTCHAR
 
 	JMP SER_RET
 
@@ -2026,7 +2027,7 @@ SER_PX:
 	JE SER_PX_FIN
 
 	PUSH AX
-	CALL FAR PTR PRINT_CHAR
+	CALL NEAR PTR PRINTCHAR
 	POP AX
 
 	SUB AL, 30h
@@ -2056,9 +2057,9 @@ SER_PX_FIN:
 	MOV DS:ITEM_PRICE[BX], AX
 
 	MOV AL, ']'
-	CALL FAR PTR PRINT_CHAR
+	CALL NEAR PTR PRINTCHAR
 	MOV AL, ' '
-	CALL FAR PTR PRINT_CHAR
+	CALL NEAR PTR PRINTCHAR
 
 	MOV DS:SER_TMP_DEST, 0
 	MOV DS:SER_TMP_W, 0
